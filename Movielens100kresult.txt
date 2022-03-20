@@ -1,0 +1,99 @@
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]
+resultas pour   avec un paramètre k =  50 : 
+accuracy
+[0.7869034271570339, 0.9916460559360791]

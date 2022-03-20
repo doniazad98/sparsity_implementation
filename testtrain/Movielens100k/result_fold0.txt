@@ -1,0 +1,12 @@
+resultas pour  <function cosine_sim at 0x000001BFC17E3040>  avec un paramètre k =  50 : 
+accuracy
+[0,7858647320383805, 0,9912689490698451]
+That took 65391.96393895149 seconds
+resultas pour  <function cosine_sim at 0x000001AD082441F0>  avec un paramètre k =  50 : 
+accuracy
+[0.7986905892348444, 1.00791409789209]
+That took 64304.36692261696 seconds
+resultas pour  <function cosine_sim at 0x000002016FAF4310>  avec un paramètre k =  50 : 
+accuracy
+[0.7970413314008696, 1.0050356313841167]
+That took 64747.999655008316 seconds
