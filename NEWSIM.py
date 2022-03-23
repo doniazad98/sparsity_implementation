@@ -233,9 +233,6 @@ def check_neighbors_validation(train, movie_id):
                 valid_neighbors.append(rated.index.values[i])
     else:
         valid_neighbors = []
-    # print(len(rated))
-
-    #print(valid_neighbors)
     return valid_neighbors
 
 
@@ -272,17 +269,19 @@ def new_sim(test, train, u1, u2):  # retourne les similarités cosinus des utili
     co_rated1 = cor[1]
     co_rated2 = cor[2]
     z = len(cor[0])
+    # alpha here is egal a 1 ?
 
-    if cor != []:
+    if cor!=[]:
         for n in range(0, z):
             res += ((min(int(co_rated1[n]), int(co_rated2[n]))) / (max(int(co_rated1[n]), int(co_rated2[n]))))
         sim = res / (z + 1)
         disim = (z / (z + 1)) - sim
         g = 1 / (z + 1)
-    if  float(sim) > float(disim):
+    if float(sim) > float(disim):
+        #why is this ? even if they are mor disimilaire tha similaire we should return similarity
         return(sim)
 
-    return (999999)
+    return (0)# this should be zero i think , no corated items
 
 
 """
@@ -300,12 +299,13 @@ def str_list_int(list):  # convertir une liste de STR à une list de INT
 def k_nearest_neighbors(test, train, user_id, item_id, k, distance):
     similarity = []
     neighbors = check_neighbors_validation(train, item_id)
-    for i in range(0, len(neighbors)):
-        user = neighbors[i]
-        similarity.append([user, distance(test, train, user_id, user)])
+    for i in neighbors:
+        similarity.append([i, distance(test, train, user_id, i)])
 
     similarity = sorted(similarity, key=lambda x: (x[1], x[0]))
-    print("similarities is {}".format(similarity))
+    #similarity.reverse()
+    print("similarities originale  is {}".format(similarity))
+    print("similarities is taken  {}".format(similarity[:k]))
     #print(similarity[:k])
     return (similarity[:k])
 
