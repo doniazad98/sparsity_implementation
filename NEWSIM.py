@@ -235,7 +235,7 @@ def check_neighbors_validation(train, movie_id):
         valid_neighbors = []
     # print(len(rated))
 
-    print(valid_neighbors)
+    #print(valid_neighbors)
     return valid_neighbors
 
 
@@ -303,8 +303,10 @@ def k_nearest_neighbors(test, train, user_id, item_id, k, distance):
     for i in range(0, len(neighbors)):
         user = neighbors[i]
         similarity.append([user, distance(test, train, user_id, user)])
+
     similarity = sorted(similarity, key=lambda x: (x[1], x[0]))
-    print(similarity[:k])
+    print("similarities is {}".format(similarity))
+    #print(similarity[:k])
     return (similarity[:k])
 
 
@@ -344,7 +346,7 @@ in case of no valid neighbors it returns 0
 def predict_rating_new(test, train, user_id, item_id, l, distance):
     top_res = 0
     but_res = 0
-    # print("-------------------  k_valid_nearest_neighbor  ---------------------------"
+    #print("-------------------  k_valid_nearest_neighbor  ---------------------------")
     nearest_neighbors = k_nearest_neighbors(test, train, user_id, item_id, l, distance)
 
     if not len(nearest_neighbors):
@@ -365,7 +367,7 @@ def predict_rating_new(test, train, user_id, item_id, l, distance):
     else:
         pred = 0.0
 
-    print(pred)
+    print("prediction of user {} on item {} is {} / {}".format(user_id, item_id,pred,test.loc[user_id,item_id]))
     return pred
 
 
