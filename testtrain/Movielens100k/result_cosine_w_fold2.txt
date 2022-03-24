@@ -1,0 +1,8 @@
+resultas pour cosine_w avec un paramètre k =  50 : 
+accuracy
+[1.3358613217768147, 1.6552869089587228]
+That took 7304.385165691376 seconds
+resultas pour cosine_w avec un paramètre k  cos != 0 =  50 : 
+accuracy
+[1.362267187859278, 1.6863735413892258]
+That took 8484.882229089737 seconds

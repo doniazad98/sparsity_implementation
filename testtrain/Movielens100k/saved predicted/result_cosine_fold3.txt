@@ -1,0 +1,4 @@
+resultas pour  <function cosine_sim at 0x000001F2FB241280>  avec un paramètre k =  50 : 
+accuracy
+[0.8155509938416863, 1.0358450599787483]
+That took 45340.71950650215 seconds

@@ -88,7 +88,7 @@ def compute_evaluate():
     for i in range(0, 5):
         actual = load_eval_data("actual", i)
         print(len(actual))
-        predicted = load_eval_data("predicted_new_sim", i)
+        predicted = load_eval_data("predicted_w", i)
         print(len(predicted))
         conf = confusion(actual, predicted, 3)
         cov = coverage(actual, predicted)
@@ -233,6 +233,9 @@ def check_neighbors_validation(train, movie_id):
                 valid_neighbors.append(rated.index.values[i])
     else:
         valid_neighbors = []
+    # print(len(rated))
+
+    print(valid_neighbors)
     return valid_neighbors
 
 
@@ -259,28 +262,14 @@ def inter_rating(test, train, u1, u2):  # calculer l'intersection entre les vote
     return (inter_rating)
 
 
-def new_sim(test, train, u1, u2):  # retourne les similarités cosinus des utilisateurs par  rapport à user_id
-    res = 0.0
-    similarity = []
-    sim = 0
-    disim = 0
-    g = 0
-    cor = inter_rating(test, train, u1, u2)
-    co_rated1 = cor[1]
-    co_rated2 = cor[2]
-    z = len(cor[0])
-    # alpha here is egal a 1 ?
-    if cor!=[]:
-        for n in range(0, z):
-            res += ((min(int(co_rated1[n]), int(co_rated2[n]))) / (max(int(co_rated1[n]), int(co_rated2[n]))))
-        sim = res / (z + 1)
-        disim = (z / (z + 1)) - sim
-        g = 1 / (z + 1)
-    if float(sim) > float(disim):
-        #why is this ? even if they are mor disimilaire tha similaire we should return similarity
-        return(sim)
+def cosine_sim(test, train, u1, u2):  # retourne les similarités cosinus des utilisateurs par  rapport à user_id
+    vec1 = str_list_int(test.loc[u1].tolist())
+    vec2 = str_list_int(train.loc[u2].tolist())
+    co_rated1 = inter_rating(test, train, u1, u2)[1]
+    co_rated2 = inter_rating(test, train, u1, u2)[2]
+    cosine_similarity = dot(co_rated1, co_rated2) / (norm(vec1) * norm(vec2))
 
-    return (0)# this should be zero i think , no corated items
+    return (cosine_similarity)
 
 
 """
@@ -298,12 +287,13 @@ def str_list_int(list):  # convertir une liste de STR à une list de INT
 def k_nearest_neighbors(test, train, user_id, item_id, k, distance):
     similarity = []
     neighbors = check_neighbors_validation(train, item_id)
-    for i in neighbors:
-        similarity.append([i, distance(test, train, user_id, i)])
+    for i in range(0, len(neighbors)):
+        user = neighbors[i]
+        sim = distance(test, train, user_id, user)
+        if sim != 0.0:
+            similarity.append([user, distance(test, train, user_id, user)])
     similarity = sorted(similarity, key=lambda x: (x[1], x[0]))
-    #similarity.reverse()
-    print("similarities originale  is {}".format(similarity))
-    print("similarities is taken  {}".format(similarity[:k]))
+    print(similarity[:k])
     return (similarity[:k])
 
 
@@ -330,6 +320,7 @@ def ratings_moy(self, user_id):
     if n == 0:
         n = 1
     result = sum / n
+
     return (result)
 
 
@@ -343,7 +334,7 @@ in case of no valid neighbors it returns 0
 def predict_rating_new(test, train, user_id, item_id, l, distance):
     top_res = 0
     but_res = 0
-    #print("-------------------  k_valid_nearest_neighbor  ---------------------------")
+    # print("-------------------  k_valid_nearest_neighbor  ---------------------------"
     nearest_neighbors = k_nearest_neighbors(test, train, user_id, item_id, l, distance)
 
     if not len(nearest_neighbors):
@@ -363,8 +354,7 @@ def predict_rating_new(test, train, user_id, item_id, l, distance):
         pred = float(r_target_moy) + float(res)
     else:
         pred = 0.0
-
-    print("prediction of user {} on item {} is {} / {}".format(user_id, item_id,pred,test.loc[user_id,item_id]))
+    print(pred)
     return pred
 
 
@@ -395,13 +385,13 @@ def evaluate_algorithm_dataframe(algorithm, distance, dataset_name, fold, *args)
     print(predicted)
 
     path = "testtrain\Movielens100k\\fold" + str(fold)
-    outfile = open(path + "\\predicted_new_sim" + str(fold), 'wb')
+    outfile = open(path + "\\predicted_w" + str(fold), 'wb')
     pickle.dump(predicted, outfile)
     outfile.close()
 
     scores = [mae_1(actual, predicted), rmse_1(actual, predicted)]
-    sys.stdout = open("testtrain\Movielens100k\\result_new_sim_fold" + str(fold) + ".txt", "a+")
-    print("resultas pour  new_sim avec un paramètre k =  " + str(*args) + " : ")
+    sys.stdout = open("testtrain\Movielens100k\\result_cosine_fold_w" + str(fold) + ".txt", "a+")
+    print("resultas pour cosine without null values avec un paramètre k =  " + str(*args) + " : ")
     print("accuracy")
     print(scores)
     print("That took {} seconds".format(time.time() - start_time))
@@ -413,9 +403,12 @@ def evaluate_algorithm_dataframe(algorithm, distance, dataset_name, fold, *args)
 # -----------------*******************    main    *********************--------------------------------
 if __name__ == '__main__':
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, new_sim,"Movielens100k",4,50))
 
+
+    """
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, cosine_sim,"Movielens100k",4,50))
+    """
 
     compute_evaluate()
 

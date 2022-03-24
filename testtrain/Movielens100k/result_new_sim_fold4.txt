@@ -1,0 +1,4 @@
+resultas pour  new_sim avec un paramètre k =  50 : 
+accuracy
+[0.8504742098151403, 1.0708897835111377]
+That took 33532.11054062843 seconds

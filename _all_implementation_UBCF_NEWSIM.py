@@ -99,7 +99,7 @@ def compute_evaluate():
 
     scores = moy_metric(result)
     print(scores)
-    sys.stdout = open("Movielens100kresult.txt", "a+")
+    sys.stdout = open("results\\NEWSIM\Movielens100kresult.txt", "a+")
     print("resultas pour   avec un paramètre k =  " + str(50) + " : ")
     print("accuracy")
     print(scores)
@@ -223,16 +223,14 @@ this function returns (from a nearest neighbors list) users who rated the target
 
 def check_neighbors_validation(train, movie_id):
     valid_neighbors = []
-    rated = []
-    # rated = train.loc[:, movie_id]
     rated = train.get(movie_id)
-    # print(rated)
     if rated is not None:
         for i in range(0, len(rated)):
             if int(rated.values[i]) != 0.0:
                 valid_neighbors.append(rated.index.values[i])
     else:
         valid_neighbors = []
+    print(valid_neighbors)
     return valid_neighbors
 
 
@@ -269,18 +267,16 @@ def new_sim(test, train, u1, u2):  # retourne les similarités cosinus des utili
     co_rated1 = cor[1]
     co_rated2 = cor[2]
     z = len(cor[0])
-    # alpha here is egal a 1 ?
-    if cor!=[]:
+
+    if cor != []:
         for n in range(0, z):
             res += ((min(int(co_rated1[n]), int(co_rated2[n]))) / (max(int(co_rated1[n]), int(co_rated2[n]))))
         sim = res / (z + 1)
         disim = (z / (z + 1)) - sim
         g = 1 / (z + 1)
-    if float(sim) > float(disim):
-        #why is this ? even if they are mor disimilaire tha similaire we should return similarity
-        return(sim)
 
-    return (0)# this should be zero i think , no corated items
+    return[u2,sim,disim,g]
+
 
 
 """
@@ -298,13 +294,18 @@ def str_list_int(list):  # convertir une liste de STR à une list de INT
 def k_nearest_neighbors(test, train, user_id, item_id, k, distance):
     similarity = []
     neighbors = check_neighbors_validation(train, item_id)
-    for i in neighbors:
-        similarity.append([i, distance(test, train, user_id, i)])
-    similarity = sorted(similarity, key=lambda x: (x[1], x[0]))
-    #similarity.reverse()
-    print("similarities originale  is {}".format(similarity))
-    print("similarities is taken  {}".format(similarity[:k]))
-    return (similarity[:k])
+
+    for i in range(0, len(neighbors)):
+        user = neighbors[i]
+        simi = distance(test, train, user_id, user)
+        similarity.append(simi)
+    print(similarity)
+    sorted_list = sorted(similarity, key=lambda item: (item[3],item[1]))
+    #similarity = sorted(similarity, key=lambda x: (x[1]))
+    print(sorted_list[:k])
+    return (sorted_list[:k])
+
+
 
 
 # ----------------- end  similarity and neighborhood selection CF   ---------------------
@@ -343,7 +344,7 @@ in case of no valid neighbors it returns 0
 def predict_rating_new(test, train, user_id, item_id, l, distance):
     top_res = 0
     but_res = 0
-    #print("-------------------  k_valid_nearest_neighbor  ---------------------------")
+    # print("-------------------  k_valid_nearest_neighbor  ---------------------------"
     nearest_neighbors = k_nearest_neighbors(test, train, user_id, item_id, l, distance)
 
     if not len(nearest_neighbors):
@@ -364,7 +365,7 @@ def predict_rating_new(test, train, user_id, item_id, l, distance):
     else:
         pred = 0.0
 
-    print("prediction of user {} on item {} is {} / {}".format(user_id, item_id,pred,test.loc[user_id,item_id]))
+    print(pred)
     return pred
 
 
@@ -413,12 +414,12 @@ def evaluate_algorithm_dataframe(algorithm, distance, dataset_name, fold, *args)
 # -----------------*******************    main    *********************--------------------------------
 if __name__ == '__main__':
 
+
     with concurrent.futures.ProcessPoolExecutor() as executor:
         executor.submit(evaluate_algorithm_dataframe(predict_rating_new, new_sim,"Movielens100k",4,50))
-
-
+    
+    """
     compute_evaluate()
 
 
-
-
+    """
