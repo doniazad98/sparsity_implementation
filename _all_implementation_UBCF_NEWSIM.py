@@ -1,4 +1,5 @@
 # -----------------  begin imports----------------------------------------------
+import random
 import sys
 import time
 from ctypes import Union
@@ -7,15 +8,32 @@ import pickle
 import concurrent.futures
 from typing import Any
 import numpy as np
+import pandas as pd
 from numpy import dot
 from numpy.linalg import norm
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.model_selection import train_test_split
 
 # -----------------  end imports----------------------------------------------
+from data_preparation import charge_subdataset
 
 """
 rated_items
 this function returns the list of rated movies and their ratings by a target user
 """
+
+
+def read_test_train():
+    fic_test = open("data/subdataset_test", "rb")
+    fic_train = open("data/subdataset_train", "rb")
+    get_record = pickle.Unpickler(fic_test)  #
+    test = pickle.load(fic_test)
+    get_record = pickle.Unpickler(fic_train)
+    train = pickle.load(fic_train)
+    # print(test,train)
+    fic_train.close()
+    fic_test.close()
+    return test, train
 
 
 def rated_items(self, user_id):  # retourne la liste des items notés ainsi que les notes attribuées
@@ -230,7 +248,7 @@ def check_neighbors_validation(train, movie_id):
                 valid_neighbors.append(rated.index.values[i])
     else:
         valid_neighbors = []
-    print(valid_neighbors)
+    # print(valid_neighbors)
     return valid_neighbors
 
 
@@ -267,16 +285,13 @@ def new_sim(test, train, u1, u2):  # retourne les similarités cosinus des utili
     co_rated1 = cor[1]
     co_rated2 = cor[2]
     z = len(cor[0])
-
     if cor != []:
         for n in range(0, z):
             res += ((min(int(co_rated1[n]), int(co_rated2[n]))) / (max(int(co_rated1[n]), int(co_rated2[n]))))
-        sim = res / (z + 1)
-        disim = (z / (z + 1)) - sim
-        g = 1 / (z + 1)
-
-    return[u2,sim,disim,g]
-
+        sim = res / (z + 2)
+        disim = (z / (z + 2)) - sim
+        g = z / (z + 2)
+    return [u2, sim, disim, g]
 
 
 """
@@ -299,13 +314,114 @@ def k_nearest_neighbors(test, train, user_id, item_id, k, distance):
         user = neighbors[i]
         simi = distance(test, train, user_id, user)
         similarity.append(simi)
-    print(similarity)
-    sorted_list = sorted(similarity, key=lambda item: (item[3],item[1]))
-    #similarity = sorted(similarity, key=lambda x: (x[1]))
-    print(sorted_list[:k])
-    return (sorted_list[:k])
+
+    sorted_list = sorted(similarity, key=lambda item: (-item[1]))
+    # similarity = sorted(similarity, key=lambda x: (x[1]))
+
+    # print("similarities chosen  {}".format(sorted_list[:k]))
+
+    return sorted_list[:k]
 
 
+def Topsis(test, train, user_id, item_id, k, distance):
+    similarity = []
+
+    e_positive = []
+    e_negative = []
+    sim = []
+    dissim = []
+    igno = []
+    neighbors = check_neighbors_validation(train, item_id)
+    if not len(neighbors):
+        return []
+
+    # ------------------------ calcule du similarity ---------------------
+    for i in neighbors:
+        # user = neighbors[i]
+        simi = distance(test, train, user_id, i)
+        similarity.append(simi)
+    # print(neighbors)
+    # ------------------------Creation decision matrix--------------------------------
+    for i in similarity:
+        sim.append(i[1])
+        dissim.append(i[2])
+        igno.append(i[3])
+    decision_matrix = pd.DataFrame({'sim': sim, 'disim': dissim, 'igno': igno}, index=neighbors)
+    # print('decision_matrix= \n {}'.format(decision_matrix))
+    # ------------------------------ Normalisation -----------------------------
+    sim_ = 0
+    disim_ = 0
+    igno_ = 0
+    normalise_decision_matrix = decision_matrix.copy()
+    for i in neighbors:
+        sim_ = sim_ + (normalise_decision_matrix.loc[i, 'sim'] * normalise_decision_matrix.loc[i, 'sim'])
+        disim_ = disim_ + (normalise_decision_matrix.loc[i, 'disim'] * normalise_decision_matrix.loc[i, 'disim'])
+        igno_ = igno_ + (normalise_decision_matrix.loc[i, 'igno'] * normalise_decision_matrix.loc[i, 'igno'])
+
+    for i in neighbors:
+        normalise_decision_matrix.loc[i, 'sim'] = normalise_decision_matrix.loc[i, 'sim'] / sqrt(sim_)
+        normalise_decision_matrix.loc[i, 'disim'] = normalise_decision_matrix.loc[i, 'disim'] / sqrt(disim_)
+        normalise_decision_matrix.loc[i, 'igno'] = normalise_decision_matrix.loc[i, 'igno'] / sqrt(igno_)
+    # print('normalise_decision_matrix= \n {}'.format(normalise_decision_matrix))
+    # ------------------------------ Ponderation ----------------------------------
+    weight = [1, 1, 1]
+    ponderation_desicion_matrix = normalise_decision_matrix.copy()
+    for i in neighbors:
+        ponderation_desicion_matrix.loc[i, 'sim'] = ponderation_desicion_matrix.loc[i, 'sim'] * weight[0]
+        ponderation_desicion_matrix.loc[i, 'disim'] = ponderation_desicion_matrix.loc[i, 'disim'] * weight[1]
+        ponderation_desicion_matrix.loc[i, 'igno'] = ponderation_desicion_matrix.loc[i, 'igno'] * weight[2]
+    # print('ponderation_desicion_matrix= \n {}'.format(ponderation_desicion_matrix))
+    # ------------------------------ A_positive & A_negative -------------------------
+
+    a_positive = pd.DataFrame({'sim': max(ponderation_desicion_matrix.loc[:, "sim"].values),
+                               'disim': min(ponderation_desicion_matrix.loc[:, "disim"].values),
+                               'igno': min(ponderation_desicion_matrix.loc[:, "igno"].values)},
+                              index=[user_id]
+                              )
+
+    a_negative = pd.DataFrame({'sim': min(ponderation_desicion_matrix.loc[:, "sim"].values),
+                               'disim': max(ponderation_desicion_matrix.loc[:, "disim"].values),
+                               'igno': max(ponderation_desicion_matrix.loc[:, "igno"].values)},
+                              index=[user_id]
+                              )
+    # print(" a_positive={} a_negative={}".format(a_positive,a_negative))
+
+    # ------------------------------ E_positive & E_negative -------------------------
+
+    euclidien_distance_positive = euclidean_distances(a_positive, ponderation_desicion_matrix)[0]
+    euclidien_distance_nagative = euclidean_distances(a_negative, ponderation_desicion_matrix)[0]
+
+    n = 0
+    for i in neighbors:
+        # print("[i,euclidien_distance_positive[n]]={}  [i,euclidien_distance_nagative[n]]={}".format([i,euclidien_distance_positive[n]],[i,euclidien_distance_nagative[n]]))
+        e_positive.append([i, euclidien_distance_positive[n]])
+        e_negative.append([i, euclidien_distance_nagative[n]])
+        n = n + 1
+    # print("e_positive={}".format(e_positive))
+    n = 0
+    # sorted_list_positive = sorted(e_positive, key=lambda item: (item[1]))# we need minimum distance
+    # sorted_list_negative = sorted(similarity, key=lambda item: (item[1]))
+
+    # ---------------------------------relative closeness-------------------------------
+    relative_closeness = []
+    for i in neighbors:
+        c = e_negative[n][1] / (e_positive[n][1] + e_negative[n][1])
+        relative_closeness.append([i, c])
+        n = n + 1
+    # --------------------------------Ranked items----------------------------------
+    final_neighbors = []
+    sorted_list_positive = sorted(relative_closeness, key=lambda item: (-item[1]))  # on veut closeness maximal
+    # print("sorted_list_positive={}".format(sorted_list_positive[:k]))
+    sorted_list_positive = sorted_list_positive[:k]
+    for i in sorted_list_positive:
+        val = [i[0]]
+        val.extend(decision_matrix.loc[i[0]].values)
+
+        final_neighbors.append(val)
+
+    # print("final neighbors = {}".format(final_neighbors))
+
+    return final_neighbors
 
 
 # ----------------- end  similarity and neighborhood selection CF   ---------------------
@@ -346,6 +462,7 @@ def predict_rating_new(test, train, user_id, item_id, l, distance):
     but_res = 0
     # print("-------------------  k_valid_nearest_neighbor  ---------------------------"
     nearest_neighbors = k_nearest_neighbors(test, train, user_id, item_id, l, distance)
+    # nearest_neighbors=Topsis(test, train, user_id, item_id, l, distance)
 
     if not len(nearest_neighbors):
         return 0.0
@@ -365,7 +482,7 @@ def predict_rating_new(test, train, user_id, item_id, l, distance):
     else:
         pred = 0.0
 
-    print(pred)
+    # print(pred)
     return pred
 
 
@@ -378,46 +495,131 @@ and save results MAE and RMSE in txt file
 """
 
 
+def cross_validation_split_dataframe(dataset, n_folds):
+    print("i am in split")
+    dataset_s = dataset.copy()
+    dataset_split = list()
+    fold_size = int(len(dataset) / n_folds)
+    users = dataset.index.values
+    # print(users)
+    my_list = list(users)
+    random.shuffle(my_list)
+    for i in range(n_folds):
+        fold = list()
+        fold = my_list[:fold_size]
+        my_list = [x for x in my_list if x not in fold]
+        fold[:] = [x - 1 for x in fold]
+        fold_pd = dataset_s.iloc[fold]
+        dataset_split.append(fold_pd)
+
+    # print(dataset_split)
+    return dataset_split
+
+
 def evaluate_algorithm_dataframe(algorithm, distance, dataset_name, fold, *args):
     start_time = time.time()
     print("i am in evaluate")
     predicted = []
+    results = open("data/results/full_knn" + str(*args), 'wb')
+    fic_test = open("data/subdataset_test", "rb")
+    record = pickle.Unpickler(fic_test)
+    test_set = pickle.load(fic_test)
 
-    test_set = load_eval_data("test_set", fold)
-    train_set = load_eval_data("train", fold)
-    pairs = load_eval_data("pairs", fold)
-    actual = load_eval_data("actual", fold)
+    fic_train = open("data/subdataset_train", "rb")
+    record = pickle.Unpickler(fic_train)
+    train_set = pickle.load(fic_train)
 
+    print(test_set, train_set)
+
+    fic_test.close()
+    fic_train.close()
+    # test_set,train_set=read_test_train()
+    pairs, actual = gen_true_values(test_set)
+    users_test = test_set.index.values
+    list = []
+    print("len pairs={}".format(len(pairs)))
+    kll = 0
+    algorithm(test_set, train_set, 597, 1534, *args, distance)
+    print("################################################################")
     for i in range(0, len(pairs)):
+        begin = time.time()
         user_id = pairs[i][0]
         item_id = pairs[i][1]
-        predicted.append(algorithm(test_set, train_set, user_id, item_id, *args, distance))
-    print(len(predicted))
-    print(predicted)
+        pre = algorithm(test_set, train_set, user_id, item_id, *args, distance)
+        predicted.append(pre)
+        print(
+            "user={} item={} kll={} actual={} predicted={} time={}".format(user_id, item_id, kll, actual[kll], pre,
+                                                                           time.time() - begin))
 
-    path = "testtrain\Movielens100k\\fold" + str(fold)
-    outfile = open(path + "\\predicted_new_sim" + str(fold), 'wb')
-    pickle.dump(predicted, outfile)
-    outfile.close()
+
+
+        kll = kll + 1
 
     scores = [mae_1(actual, predicted), rmse_1(actual, predicted)]
-    sys.stdout = open("testtrain\Movielens100k\\result_new_sim_fold" + str(fold) + ".txt", "a+")
+    tp, fp, tn, fn = confusion(predicted, actual, 3)
+    rec = recall(tp, fn)
+    presi = precision(tp, fp)
+    f2 = f_measure(presi, rec)
+    cov = coverage(actual, predicted)
+    print("precision={} \n recall={} \n f_mesure={} \n covrage={}".format(presi, rec, f2, cov))
     print("resultas pour  new_sim avec un paramètre k =  " + str(*args) + " : ")
     print("accuracy")
     print(scores)
     print("That took {} seconds".format(time.time() - start_time))
-    sys.stdout.close()
-
+    pickle.dump([predicted, actual], results)
+    results.close()
     return (scores)
+
+
+def gen_true_values(test):
+    pair = []
+    y_true = []
+    list_users = test.index.values.tolist()
+    print(list_users)
+    list_items = test.columns.values.tolist()
+    for i in range(0, len(list_users)):
+        user_id = list_users[i]
+        for j in range(0, len(list_items)):
+            if int(test.values[i][j]) != 0:
+                item_id = list_items[j]
+                pair.append([user_id, item_id])
+                y_true.append(int(test.values[i][j]))
+
+    return pair, y_true
 
 
 # -----------------*******************    main    *********************--------------------------------
 if __name__ == '__main__':
-
-
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, new_sim,"Movielens100k",4,50))
-    
+        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, new_sim, "Movielens100k", 4, 50))
+
+
+
+    """
+    fic_result = open("data/results/topsis50", "rb")
+    record = pickle.Unpickler(fic_result)
+    data_pre = pickle.load(fic_result)
+    print(data_pre)
+    #results = open("data/results/topsis50", 'wb')
+    fic_data = open("data/5-subsets/subset1", "rb")
+    record = pickle.Unpickler(fic_data)
+    data = pickle.load(fic_data)
+
+    print(data)
+    test_set, train_set = train_test_split(data, test_size=0.2, random_state=25)
+
+    fic_data.close()
+    # test_set,train_set=read_test_train()
+    pairs, actual = gen_true_values(test_set)
+    print(actual)
+    tp, fp, tn, fn=confusion(data_pre,actual,3)
+    rec=recall(tp,fn)
+    presi=precision(tp,fp)
+    f2=f_measure(presi,rec)
+    cov=coverage(actual,data_pre)
+    print("precision={} \n recall={} \n f_mesure={} \n covrage={}".format(presi,rec,f2,cov))
+"""
+
     """
     compute_evaluate()
 

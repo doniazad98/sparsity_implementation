@@ -37,10 +37,22 @@ def similarity_matrice_20():
     # sparsity2article(test_set, train_set, 289)
     item_list = train_set.columns.values
     users = train_set.index.values
+    test_users=test_set.index.values
     similarity_matrix=[]# we append lists in it
+    user_20=test_users[0:20]
+    print("user_20={}".format(user_20))
+    for i in user_20 :
+        sim_loc =local_similarity(test_set, train_set, i, item_list, users)
+        sim2_loc=local_similarity_2(test_set, train_set, 5, sim_loc, i)
+        the_vector = {i : sim2_loc}
+        print("the_vector={}".format(the_vector))
+        similarity_matrix.append(the_vector)
 
-    # user_surprisal_vector(train_set, u_user, item_list)
-    local_similarity(test_set, train_set, 289, item_list, users)
+    result = pd.DataFrame(similarity_matrix, index=user_20)
+    path = "testtrain"
+    outfile = open(path + "\\predicted20" , 'wb')
+    pickle.dump(result, outfile)
+    outfile.close()
 
     return  0
 
@@ -95,12 +107,12 @@ def local_similarity_2(test,train,corated_thresshold,similarity,user_id):
         sim=min(co,corated_thresshold)/corated_thresshold
         sim=sim*i[1]
         similarity2.append([i[0],sim])
-        print("similarity of user {} was {} and now is {}".format(i[0], i[1],sim))
+        #print("similarity of user {} was {} and now is {}".format(i[0], i[1],sim))
     print("weighted similarity = {}".format(similarity2))
 
 
 
-    return 0
+    return similarity2
 
 def items_variables(item_vector):
     u=0
@@ -135,7 +147,7 @@ def user_surprisal_vector(train,u_user,item_list):
         valeur.append(s*i)
     the_vector={'valeur':valeur}
     the_vector=pd.DataFrame(the_vector,index=id_item)
-    #print('user_surprisal_vector= \n {}'.format(the_vector))
+    print('user_surprisal_vector= \n {}'.format(the_vector))
     return the_vector
 
 def i_rpi(rpi,u,b):
@@ -400,10 +412,11 @@ def evaluate_algorithm_dataframe(algorithm, distance,dataset_name, fold,*args):
     #sparsity2article(test_set, train_set, 289)
     item_list = train_set.columns.values
     users = train_set.index.values
+    u_user=test_set.loc[289,:]
 
 
-    #user_surprisal_vector(train_set, u_user, item_list)
-    local_similarity(test_set, train_set, 289, item_list, users)
+    user_surprisal_vector(train_set, u_user, item_list)
+    #local_similarity(test_set, train_set, 289, item_list, users)
 
     return 0
 """
@@ -609,11 +622,12 @@ if __name__ == '__main__':
     y_pred_euc = []
     y_pred_cos = []
     y_true =[]
+    similarity_matrice_20()
 
 
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, cosine_sim,"Movielens100k",4,50))
+    #with concurrent.futures.ProcessPoolExecutor() as executor:
+        #executor.submit(evaluate_algorithm_dataframe(predict_rating_new, cosine_sim,"Movielens100k",4,50))
 
 
     #compute_evaluate()
