@@ -1,0 +1,44 @@
+Ignorance then similarity 
+precision=0.704673173617273 
+ recall=0.8563982746225737 
+ f_mesure=0.7731624208989128 
+ covrage=0.9938650306748467
+resultas pour  new_sim avec un paramètre k =  10 : 
+accuracy
+[0.7764878700603417, 0.9870280701660643]
+That took 10150.109246969223 seconds
+*********************************************
+precision=0.717687074829932 
+ recall=0.8587860555653867 
+ f_mesure=0.7819221783613953 
+ covrage=0.9938650306748467
+resultas pour  new_sim avec un paramètre k =  20 : 
+accuracy
+[0.7592510257668703, 0.9649456998962859]
+That took 12901.84443283081 seconds
+*********************************************
+precision=0.7264614011601963 
+ recall=0.8601620288834096 
+ f_mesure=0.7876784130312071 
+ covrage=0.9938650306748467
+resultas pour  new_sim avec un paramètre k =  30 : 
+accuracy
+[0.7525320083499317, 0.957881555268042]
+*********************************************
+precision=0.733482475764355 
+ recall=0.8600909408884225 
+ f_mesure=0.7917572245029382 
+ covrage=0.9938650306748467
+resultas pour  new_sim avec un paramètre k =  40 : 
+accuracy
+[0.7492415956026719, 0.9545420835421362]
+That took 14264.601208686829 seconds
+*********************************************
+precision=0.73796711509716 
+ recall=0.8589074460681977 
+ f_mesure=0.7938575333654929 
+ covrage=0.9938650306748467
+resultas pour  new_sim avec un paramètre k =  50 : 
+accuracy
+[0.7473038466103293, 0.952480352914547]
+That took 15992.843333005905 seconds

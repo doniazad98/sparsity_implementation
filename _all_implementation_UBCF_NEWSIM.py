@@ -13,6 +13,7 @@ from numpy import dot
 from numpy.linalg import norm
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.model_selection import train_test_split
+from data_preparation import sparsity
 
 # -----------------  end imports----------------------------------------------
 from data_preparation import charge_subdataset
@@ -178,22 +179,12 @@ def confusion(y_true, y_pred, threshold):
     return [tp, fp, tn, fn]
 
 
-"""
-precision
-this function returns precision for predicted and actual ratings
-"""
-
 
 def precision(tp, fp):
     result = tp / (tp + fp)
     print(result)
     return (result)
 
-
-"""
-recall
-this function returns recall for predicted and actual ratings
-"""
 
 
 def recall(tp, fn):
@@ -202,23 +193,12 @@ def recall(tp, fn):
     return (result)
 
 
-"""
-f_measure
-this function returns f_measure for predicted and actual ratings
-"""
-
 
 def f_measure(precision, recall):
     result = 0
     result: Union[float, Any] = (2 * precision * recall) / (precision + recall)
     print(result)
     return result
-
-
-"""
-coverage
-this function returns coverage for predicted and actual ratings
-"""
 
 
 def coverage(y_true, y_pred):
@@ -233,10 +213,7 @@ def coverage(y_true, y_pred):
 
 # ----------------- begin similarity and neighborhood selection CF   ---------------------
 
-"""
-check_neighbors_validation
-this function returns (from a nearest neighbors list) users who rated the target item
-"""
+
 
 
 def check_neighbors_validation(train, movie_id):
@@ -251,12 +228,6 @@ def check_neighbors_validation(train, movie_id):
     # print(valid_neighbors)
     return valid_neighbors
 
-
-"""
-cosine_sim
-this function returns cosine similarity for 
-a target user (in test_set) and all his neighbors (in train_set)
-"""
 
 
 def inter_rating(test, train, u1, u2):  # calculer l'intersection entre les votes de deux utilisateurs
@@ -294,10 +265,6 @@ def new_sim(test, train, u1, u2):  # retourne les similarités cosinus des utili
     return [u2, sim, disim, g]
 
 
-"""
-str_list_int
-this function converts a str list to int list
-"""
 
 
 def str_list_int(list):  # convertir une liste de STR à une list de INT
@@ -315,10 +282,12 @@ def k_nearest_neighbors(test, train, user_id, item_id, k, distance):
         simi = distance(test, train, user_id, user)
         similarity.append(simi)
 
-    sorted_list = sorted(similarity, key=lambda item: (-item[1]))
+    #sorted_list = sorted(similarity, key=lambda item: (item[3],-item[1]))
+    sorted_list = sorted(similarity, key=lambda item: (-(item[1] - item[2])))
+
     # similarity = sorted(similarity, key=lambda x: (x[1]))
 
-    # print("similarities chosen  {}".format(sorted_list[:k]))
+    #print("similarities chosen  {}".format(sorted_list))
 
     return sorted_list[:k]
 
@@ -364,7 +333,7 @@ def Topsis(test, train, user_id, item_id, k, distance):
         normalise_decision_matrix.loc[i, 'igno'] = normalise_decision_matrix.loc[i, 'igno'] / sqrt(igno_)
     # print('normalise_decision_matrix= \n {}'.format(normalise_decision_matrix))
     # ------------------------------ Ponderation ----------------------------------
-    weight = [1, 1, 1]
+    weight = [3, 1, 2]
     ponderation_desicion_matrix = normalise_decision_matrix.copy()
     for i in neighbors:
         ponderation_desicion_matrix.loc[i, 'sim'] = ponderation_desicion_matrix.loc[i, 'sim'] * weight[0]
@@ -450,11 +419,6 @@ def ratings_moy(self, user_id):
     return (result)
 
 
-"""
-predict_rating_new
-this function computes the predicted ratings using the weighted average formula
-in case of no valid neighbors it returns 0
-"""
 
 
 def predict_rating_new(test, train, user_id, item_id, l, distance):
@@ -462,7 +426,7 @@ def predict_rating_new(test, train, user_id, item_id, l, distance):
     but_res = 0
     # print("-------------------  k_valid_nearest_neighbor  ---------------------------"
     nearest_neighbors = k_nearest_neighbors(test, train, user_id, item_id, l, distance)
-    # nearest_neighbors=Topsis(test, train, user_id, item_id, l, distance)
+    #nearest_neighbors=Topsis(test, train, user_id, item_id, l, distance)
 
     if not len(nearest_neighbors):
         return 0.0
@@ -520,26 +484,24 @@ def evaluate_algorithm_dataframe(algorithm, distance, dataset_name, fold, *args)
     start_time = time.time()
     print("i am in evaluate")
     predicted = []
-    results = open("data/results/full_knn" + str(*args), 'wb')
-    fic_test = open("data/subdataset_test", "rb")
-    record = pickle.Unpickler(fic_test)
-    test_set = pickle.load(fic_test)
+    results = open("data/results/full_2alpha_knn_sim_dissim" + str(*args), 'wb')
+    # ----------------Small dataset
+    #fic_data = open("data/5-subsets/subset1", "rb")
+    #record = pickle.Unpickler(fic_data)
+    #data = pickle.load(fic_data)
+    #train_set,test_set=train_test_split(data, test_size=0.2, random_state=25)
+    # ----------------Big dataset
+    test_set, train_set = read_test_train()
+    sparsity(test_set)
+    sparsity(train_set)
 
-    fic_train = open("data/subdataset_train", "rb")
-    record = pickle.Unpickler(fic_train)
-    train_set = pickle.load(fic_train)
 
     print(test_set, train_set)
-
-    fic_test.close()
-    fic_train.close()
-    # test_set,train_set=read_test_train()
     pairs, actual = gen_true_values(test_set)
     users_test = test_set.index.values
     list = []
     print("len pairs={}".format(len(pairs)))
     kll = 0
-    algorithm(test_set, train_set, 597, 1534, *args, distance)
     print("################################################################")
     for i in range(0, len(pairs)):
         begin = time.time()
@@ -547,14 +509,8 @@ def evaluate_algorithm_dataframe(algorithm, distance, dataset_name, fold, *args)
         item_id = pairs[i][1]
         pre = algorithm(test_set, train_set, user_id, item_id, *args, distance)
         predicted.append(pre)
-        print(
-            "user={} item={} kll={} actual={} predicted={} time={}".format(user_id, item_id, kll, actual[kll], pre,
-                                                                           time.time() - begin))
-
-
-
+        print("user={} item={} kll={} actual={} predicted={} time={}".format(user_id, item_id, kll, actual[kll], pre,time.time() - begin))
         kll = kll + 1
-
     scores = [mae_1(actual, predicted), rmse_1(actual, predicted)]
     tp, fp, tn, fn = confusion(predicted, actual, 3)
     rec = recall(tp, fn)
@@ -590,8 +546,15 @@ def gen_true_values(test):
 
 # -----------------*******************    main    *********************--------------------------------
 if __name__ == '__main__':
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, new_sim, "Movielens100k", 4, 50))
+    for k in [30,40,50]:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            executor.submit(evaluate_algorithm_dataframe(predict_rating_new, new_sim, "Movielens100k", 4, k))
+
+
+
+
+
+
 
 
 

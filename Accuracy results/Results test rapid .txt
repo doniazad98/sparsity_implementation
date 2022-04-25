@@ -1,0 +1,119 @@
+POUR k=10 Topsis Weights= [1,1,1] That took 1092.879555463791 seconds
+MAE=0.5048749414670635
+RMSE=0.67967771768024
+Recall=0.9472326454033771 
+Presision=0.9107102593010147
+covarge=0.9107102593010147
+*********************************************************************************
+POUR k=20 Topsis Weights= [1,1,1] That took 1017.0383048057556 seconds
+MAE=0.5404979585717228
+RMSE=0.718099319620692
+Recall=0.9366295264623955
+Presision=0.920602327173169
+covarge=1.0
+*********************************************************************************
+POUR k=30 Topsis Weights= [1,1,1]
+MAE=0.5659827291096299
+RMSE=0.7462852519397335
+Recall=0.9317761332099908
+Presision=0.9251435132032148
+covarge=1.0
+*********************************************************************************
+POUR k=40 Topsis Weights= [1,1,1]
+MAE=0.585442234876202
+RMSE=0.7674741963324685
+Recall=0.9251263206247129 
+Presision=0.9298245614035088
+covarge=1.0
+*********************************************************************************
+POUR k=50 Topsis Weights= [1,1,1] That took 1183.5373594760895 seconds
+MAE=0.6038724815680342
+RMSE=0.7876908765592832
+Recall=0.9195796207448024 
+Presision=0.9353939112247269
+covarge=1.0
+###################################################################################
+###################################################################################
+###################################################################################
+###################################################################################
+###################################################################################
+POUR k=10 KNN Weights= [1,1,1] 
+MAE=0.6357714992790272
+RMSE=0.6357714992790272
+Recall=0.9221501390176089
+Presision=0.9134725728712417
+covarge=1.0
+*********************************************************************************
+POUR k=20 KNN Weights= [1,1,1] That took 195.8099126815796 seconds
+MAE=0.6369149307719232
+RMSE=0.8255196522955742
+Recall=0.920129270544783
+Presision=0.9233263840630067
+covarge=1.0
+*********************************************************************************
+POUR k=30 KNN Weights= [1,1,1] That took 268.55888867378235 seconds
+MAE=0.6373790733776298
+RMSE=0.8252329838378804
+Recall=0.9201380897583429
+Presision=0.9252487850034714
+covarge=1.0
+*********************************************************************************
+POUR k=40 KNN Weights= [1,1,1] That took 232.55498027801514 seconds
+MAE=0.6372588003378618
+RMSE=0.8238207124075765
+Recall=0.9183298921771048
+Presision=0.9298490127758421
+covarge=1.0
+*********************************************************************************
+POUR k=50 KNN Weights= [1,1,1] That took 351.90843200683594 seconds
+MAE=0.6321784513367069
+RMSE=0.818894080306508
+Recall=0.9160759204207638 
+Presision=0.9327124563445868
+covarge=1.0
+
+
+Code= 
+def evaluate_algorithm_dataframe(algorithm, distance, dataset_name, fold, *args):
+    start_time = time.time()
+    print("i am in evaluate")
+    predicted = []
+    results = open("data/results/knn10", 'wb')
+    fic_data = open("data/5-subsets/subset1", "rb")
+    record=pickle.Unpickler(fic_data)
+    data = pickle.load(fic_data)
+
+    print(data)
+    test_set,train_set=train_test_split(data, test_size=0.2, random_state=25)
+
+    fic_data.close()
+    #test_set,train_set=read_test_train()
+    pairs,actual=gen_true_values(test_set)
+    users_test=test_set.index.values
+    list=[]
+    print("len pairs={}".format(len(pairs)))
+    kll=0
+    for i in range(0, len(pairs)):
+        begin=time.time()
+        user_id = pairs[i][0]
+        item_id = pairs[i][1]
+        pre=algorithm(test_set, train_set, user_id, item_id, *args, distance)
+        predicted.append(pre)
+        print("user={} item={} kll={} actual={} predicted={} time={}".format(user_id, item_id, kll,actual[kll],pre,time.time()-begin))
+        kll = kll + 1
+
+
+    scores = [mae_1(actual, predicted), rmse_1(actual, predicted)]
+    tp, fp, tn, fn = confusion(predicted, actual, 3)
+    rec = recall(tp, fn)
+    presi = precision(tp, fp)
+    f2 = f_measure(presi, rec)
+    cov = coverage(actual, predicted)
+    print("precision={} \n recall={} \n f_mesure={} \n covrage={}".format(presi, rec, f2, cov))
+    print("resultas pour  new_sim avec un paramètre k =  " + str(*args) + " : ")
+    print("accuracy")
+    print(scores)
+    print("That took {} seconds".format(time.time() - start_time))
+    pickle.dump([predicted,actual], results)
+    results.close()
+    return (scores)

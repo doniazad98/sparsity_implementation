@@ -1,4 +1,5 @@
 # -----------------  begin imports----------------------------------------------
+import math
 import sys
 import time
 from ctypes import Union
@@ -9,7 +10,114 @@ from typing import Any
 import numpy as np
 from numpy import dot
 from numpy.linalg import norm
+from statistics import  variance
 # -----------------  end imports----------------------------------------------
+
+def rated_items(self,user_id): # retourne la liste des items notés ainsi que les notes attribuées
+    # print(user)
+    list_movie = []
+    list_ratings = []
+    list_rated = []
+    users = self.loc[user_id, :]
+    movies = users.index
+    for i in range(0, len(movies)):
+        # print(users.values[i])
+        if int(users.values[i]) != 0.0:
+            list_movie.append(movies[i])
+            list_ratings.append(int(users.values[i]))
+
+    list_rated = [list_movie, list_ratings]
+    # print(list_rated)
+    return (list_rated)
+
+def corated_items(test,train, user_id, v):
+    co_rated = []
+    rated_by_u = rated_items(test,user_id)
+    rated_by_v = rated_items(train,v)
+    for i in range(0, len(rated_by_u[0])):
+        for j in range(0, len(rated_by_v[0])):
+            if rated_by_u[0][i] == rated_by_v[0][j]:
+                co_rated.append(rated_by_u[0][i])
+    return co_rated
+
+def moyen_rating_item(test,train,i):
+    sum=0
+    num=0
+    u_test=test.index.values
+    v_train=train.index.values
+    for u in u_test :
+        if test.loc[u,i]!=0:
+            sum=sum+test.loc[u,i]
+            num=num+1
+    for v in v_train:
+        if train.loc[v,i]!=0:
+            sum = sum + train.loc[v, i]
+            num = num + 1
+    #print("moyen ratings item={}".format(sum/num))
+    if num==0:
+        return 0
+    else :
+        return sum/num
+
+def sim_pip(test,train,u,v):
+    co_items=corated_items(test,train,u,v)
+    sim=0
+    for i in co_items:
+        uk = moyen_rating_item(test, train,i)
+        #print("u={} v={} i={}".format(u,v,i))
+        sim=sim+pip(test,train,test.loc[u,i],train.loc[v,i],uk)
+    #print("similarity final = {}".format(sim))
+    return sim
+
+def pip(test,train,ru,rv,uk):
+    im=impact(ru,rv)
+    pro=proximity(ru,rv)
+    pop=popularity(ru,rv,uk)
+    #print("ru={} rv={}".format(ru,rv))
+    #print("Impact={} proximity={} popylarity={}".format(im ,pro,pop))
+
+    return im*pro*pop
+
+def Agreement(ru,rv):
+    if (ru > rmed > rv) or (ru < rmed < rv) :
+        return False
+    else :
+        return True
+
+def impact(ru,rv):
+    im=(abs(ru-rmed) +1)*(abs(rv-rmed)+1)
+    if Agreement(ru,rv):
+        return im
+    else :
+        if im != 0:
+            return 1 / im
+        else:
+            return 0
+
+def proximity(ru,rv)  :
+    if Agreement(ru,rv):
+        distance =abs(ru-rv)
+    else:
+        distance=2*abs(ru-rv)
+    val=2*(r_max-r_min)+1
+    return (val-distance)*(val-distance)
+
+def popularity(ru,rv,uk):
+    if (ru>uk and rv>uk) or (ru<uk and rv<uk):
+        return 1+ (((ru+rv)/2)-uk)*(((ru+rv)/2)-uk)
+    else:
+        return 1
+
+def piparticle(test,train,user_id):
+    users = train.index.values
+    similarity=[]
+    for v in users :
+        pip=sim_pip(test,train,user_id,v)
+        similarity.append([v,pip])
+    #print(" -------------------------------- getting out  sparcity aware")
+    print("similarity= {}".format(similarity))
+    return similarity
+
 
 """
 rated_items
@@ -69,8 +177,6 @@ def rmse_1(y_true, y_pred): # we only consider predicted ratings
     return(result1)
 
 
-
-
 """
 compute_evaluate
 this function returns the average MAE and RMSE for the 5 folds
@@ -78,7 +184,6 @@ this function returns the average MAE and RMSE for the 5 folds
 
 def compute_evaluate():
     result = []
-
     for i in range (0,5):
         actual = load_eval_data("actual", i)
         print(len(actual))
@@ -93,8 +198,8 @@ def compute_evaluate():
 
     scores = moy_metric(result)
     print(scores)
-    sys.stdout = open("results\cosine\Movielens100kresult.txt", "a+")
-    print("resultas pour   avec un paramètre k =  " + str(50) + " : ")
+    sys.stdout = open("results\cosine\pred_new_Movielens100kresult.txt", "a+")
+    print("resultas avec un paramètre k =  " + str(50) + " : ")
     print("accuracy")
     print(scores)
 
@@ -105,6 +210,7 @@ def compute_evaluate():
 moy_metric
 this function calculates the averages from a list 
 """
+
 def moy_metric(scores):
     mae = 0.0
     rmse = 0.0
@@ -133,7 +239,7 @@ def confusion(y_true, y_pred, threshold):
     fp = 0
     tn = 0
     fn = 0
-    print('len du valeurs {}'.format(len(y_true)))
+    #print('len du valeurs {}'.format(len(y_true)))
     for i in range(0, len(y_true)):
         #print('y_pred= {} y_true={}'.format(y_pred[i], y_true[i]))
 
@@ -155,7 +261,7 @@ this function returns precision for predicted and actual ratings
 def precision(tp, fp):
 
     result = tp / (tp + fp)
-    print(result)
+    #print(result)
     return (result)
 
 """
@@ -166,7 +272,7 @@ this function returns recall for predicted and actual ratings
 def recall(tp, fn):
 
     result = tp / (tp + fn)
-    print(result)
+    #print(result)
     return (result)
 
 
@@ -193,7 +299,7 @@ def coverage(y_true, y_pred):
         if y_pred[i] != 0.0:
             pt += 1
     result = pt / len(y_true)
-    print("pt is {}".format(pt))
+    #print("pt is {}".format(pt))
     return result
 # ----------------- begin similarity and neighborhood selection CF   ---------------------
 
@@ -216,7 +322,7 @@ def check_neighbors_validation(train, movie_id):
         valid_neighbors = []
     #print(len(rated))
 
-    print(valid_neighbors)
+    #print(valid_neighbors)
     return valid_neighbors
 
 """
@@ -245,8 +351,8 @@ def cosine_sim(test,train,u1,u2):  # retourne les similarités cosinus des utili
     vec2 = str_list_int(train.loc[u2].tolist())
     co_rated1 = inter_rating(test, train, u1, u2)[1]
     co_rated2 = inter_rating(test, train, u1, u2)[2]
+    if co_rated1 ==  []: return 0
     cosine_similarity = dot(co_rated1, co_rated2) / (norm(vec1) * norm(vec2))
-    print("the similarity is {}".format(cosine_similarity))
     return(cosine_similarity)
 
 """
@@ -266,9 +372,9 @@ def k_nearest_neighbors(test, train, user_id, item_id, k, distance):
     for i in range(0, len(neighbors)):
         user = neighbors[i]
         sim = distance(test, train, user_id, user)
-        if sim != 0.0:
-            similarity.append([user, distance(test, train, user_id, user)])
-    similarity = sorted(similarity, key=lambda x: (x[1], x[0]))
+        if sim != 0:
+            similarity.append([user, sim])
+    similarity = sorted(similarity, key=lambda x: (-x[1]))
     print(similarity[:k])
     return (similarity[:k])
 
@@ -303,7 +409,7 @@ def ratings_moy(self, user_id):
 predict_rating_new
 this function computes the predicted ratings using the weighted average formula
 in case of no valid neighbors it returns 0
-"""
+
 def predict_rating_new(test, train, user_id, item_id, l,distance):
     top_res = 0
     but_res = 0
@@ -330,7 +436,38 @@ def predict_rating_new(test, train, user_id, item_id, l,distance):
     print(pred)
     return pred
 
+"""
 
+def predict_rating_new(test, train, user_id, item_id, l,distance):
+    top_res = 0
+    but_res = 0
+    # print("-------------------  k_valid_nearest_neighbor  ---------------------------"
+    nearest_neighbors = k_nearest_neighbors(test, train, user_id, item_id, l, distance)
+
+    if not len(nearest_neighbors):
+        return 0.0
+
+    r_true = int(test.loc[user_id][item_id])  # added line
+    test.loc[user_id][item_id] = 0  # added line
+    r_target_moy = ratings_moy(test, user_id)  # added line
+    #r_target_moy = ratings_moy(test, user_id)
+    for i in range(0, len(nearest_neighbors)):
+        u_id = nearest_neighbors[i][0]
+        s = nearest_neighbors[i][1]
+        r_bar = ratings_moy(train, u_id)
+        r = train.loc[u_id][item_id]
+        top_res += float(s) * (float(r) - float(r_bar))
+        but_res += abs(float(s))
+
+    if but_res != 0:
+        res = float(top_res) / float(but_res)
+        pred = float(r_target_moy) + float(res)
+    else :
+        pred = 0.0
+
+    #print(pred)
+    test.loc[user_id][item_id] = float(r_true)
+    return pred
 # ----------------- end prediction   ---------------------
 
 """
@@ -343,26 +480,31 @@ def evaluate_algorithm_dataframe(algorithm, distance,dataset_name, fold,*args):
     start_time = time.time()
     print("i am in evaluate")
     predicted = []
-
     test_set = load_eval_data("test_set", fold)
     train_set = load_eval_data("train", fold)
     pairs = load_eval_data("pairs", fold)
     actual = load_eval_data("actual", fold)
+    kll=0
+    print("Number of pairs to predit = {}".format(len(pairs)))
 
     for i in range (0,len(pairs)):
+        begin = time.time()
         user_id = pairs[i][0]
         item_id = pairs[i][1]
-        predicted.append(algorithm(test_set,train_set,user_id, item_id, *args,distance))
-    print(len(predicted))
-    print(predicted)
+        pre=algorithm(test_set,train_set,user_id, item_id, *args,distance)
+        predicted.append(pre)
+        print("user={} item={} pair_number={} actual={} predicted={} time={}".format(user_id, item_id, kll, actual[kll], pre,time.time() - begin))
+        kll=kll+1
+    #print(len(predicted))
+    #print(predicted)
 
     path = "testtrain\Movielens100k\\fold"+str(fold)
-    outfile = open(path +"\\predicted"+ str(fold), 'wb')
+    outfile = open(path +"\\predicted_new"+ str(fold), 'wb')
     pickle.dump(predicted, outfile)
     outfile.close()
 
     scores = [mae_1(actual, predicted),rmse_1(actual, predicted)]
-    sys.stdout = open("testtrain\Movielens100k\\result_cosine_fold"+str(fold)+".txt", "a+")
+    sys.stdout = open("testtrain\Movielens100k\\new_result_cosine_fold"+str(fold)+".txt", "a+")
     print("resultas pour  "+str(distance)+"  avec un paramètre k =  "+str(*args)+" : ")
     print("accuracy")
     print(scores)
@@ -374,15 +516,11 @@ def evaluate_algorithm_dataframe(algorithm, distance,dataset_name, fold,*args):
 
 # -----------------*******************    main    *********************--------------------------------
 if __name__ == '__main__':
-
-
-    
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, cosine_sim,"Movielens100k",4,50))
-
+    r_max = 5
+    r_min = 1
+    rmed = (r_max + r_min) / 2
 
     #compute_evaluate()
-    
-
-
-
+   
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, sim_pip,"Movielens100k",4,50))

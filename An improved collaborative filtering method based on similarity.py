@@ -1,6 +1,8 @@
 # -----------------  begin imports----------------------------------------------
 import sys
 import time
+
+import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cosine
 from sklearn.metrics import accuracy_score
@@ -56,11 +58,6 @@ def munis_function(l1, l2):# l1 - l2
         if i not in l2 :
             l3.append(i)
     return l3
-"""
-rated_by_u : the films that he rated
-u_user : the portion of data frame that represent the elementsand notes
-
-"""
 
 def sparsity1article(test,train,user_id):
 
@@ -90,9 +87,8 @@ def sparsity1article(test,train,user_id):
         #print("Similarity between {} and {} = {}".format(user_id,v,s1*s2*s3))
         similarity.append([v,s1*s2*s3])
     print(" -------------------------------- getting out  sparcity aware")
+    print("similarity= {}".format(similarity))
     return similarity
-
-
 
 def S1(u_user,v_user,corated_uv,totale_rated_uv,rated_by_u,rated_by_v,moyen_ratings_u,moyen_ratings_v):
     up=0
@@ -139,9 +135,6 @@ def S1(u_user,v_user,corated_uv,totale_rated_uv,rated_by_u,rated_by_v,moyen_rati
             down_v_moy=down_v_moy+(moyen_ratings_v*moyen_ratings_v)
 
         return up/(math.sqrt(down_u+down_u_moy)*math.sqrt(down_v+down_v_moy))
-
-
-
 
 def S2(corated_uv,rated_by_u,rated_by_v):# im sure about this function
     var1=(len(corated_uv)*len(corated_uv))/(len(rated_by_u)*len(rated_by_v))
@@ -624,10 +617,39 @@ if __name__ == '__main__':
     y_true =[]
     sparsity_level = 0.9
     sparsity_thershold=0.98
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, sparsity1article, "Movielens100k", 4, 50))
+    print("----------------------test des resultats--------------------")
+    data = np.array([['', 'item1', 'item2', 'item3', 'item4'],
+                     ['User1', 4, 3, 5, 4],
+                     ['User2', 5, 3, 0, 0],
+                     ['User3', 4, 3, 3, 4],
+                     ['User4', 2, 1, 0, 0],
+                     ['User5', 4, 2, 0, 0]])
+    id_item = ['User1', 'User2', 'User3', 'User4', 'User5']
+    item1_ = []
+    item2_ = []
+    item3_ = []
+    item4_ = []
+    item1 = [4, 5, 4, 2, 4]
+    item2 = [3, 3, 3, 1, 2]
+    item3 = [5, 0, 3, 0, 0]
+    item4 = [4, 0, 4, 0, 0]
+    for i in item1:
+        item1_.append(i)
+    for i in item2:
+        item2_.append(i)
+    for i in item3:
+        item3_.append(i)
+    for i in item4:
+        item4_.append(i)
 
-    compute_evaluate()
+    thevector = {'item1': item1_, 'item2': item2_, 'item3': item3_, 'item4': item4_}
+    data_fr = pd.DataFrame(thevector, index=id_item)
+    print("the data frame is {}".format(data_fr))  # we should work with that
+    sparsity1article(data_fr, data_fr, 'User4')
+    #with concurrent.futures.ProcessPoolExecutor() as executor:
+    #    executor.submit(evaluate_algorithm_dataframe(predict_rating_new, sparsity1article, "Movielens100k", 4, 50))
+
+    #compute_evaluate()
 
 
 

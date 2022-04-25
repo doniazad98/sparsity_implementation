@@ -1,0 +1,17 @@
+precision=0.7160458037396724 
+ recall=0.8875314408911247 
+ f_mesure=0.7926193341355796 
+ covrage=0.9938650306748467
+resultas pour  new_sim avec un paramètre k =  10 : 
+accuracy
+[0.6869115188702196, 0.8901898833311387]
+That took 12424.509962320328 seconds
+********************************************************
+precision=0.7294169352475828 
+ recall=0.8803041018387553 
+ f_mesure=0.7977888158948887 
+ covrage=0.9938650306748467
+resultas pour  new_sim avec un paramètre k =  20 : 
+accuracy
+[0.6977519888498929, 0.8995139732919517]
+That took 15229.682074546814 seconds
