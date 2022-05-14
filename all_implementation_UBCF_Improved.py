@@ -8,6 +8,7 @@ import pickle
 import concurrent.futures
 from typing import Any
 import numpy as np
+import pandas as pd
 from numpy import dot
 from numpy.linalg import norm
 from statistics import  variance
@@ -83,15 +84,18 @@ def sparsity1article(test,train,user_id):
         corated_uv=intersection(rated_by_v,rated_by_u)#intersection
         #print(" union {} ans {} is : {} \n intersection {} and {} is {}\n".format(user_id,v,totale_rated_uv,user_id,v,corated_uv))
         s1=S1(u_user,v_user,corated_uv,totale_rated_uv,rated_by_u,rated_by_v,moyen_ratings_u,moyen_ratings_v)
-        #print("S1={}".format(s1))
+        print("S1={}".format(s1))
         s2 = S2(corated_uv, rated_by_u, rated_by_v)
         s3 = S3(u_user, v_user, moyen_ratings_u - moyen_ratings_v)
         #print("S2={}".format(s2))
         #print("S3={}".format(s3))
         #print("Similarity between {} and {} = {}".format(user_id,v,s1*s2*s3))
+
+        print("similarity between {} and {} is {}".format(user_id,v,s1*s2*s3))
+        print("#################################################")
         similarity.append([v,s1*s2*s3])
     print(" -------------------------------- getting out  sparcity aware")
-    print("similarity= {}".format(similarity))
+    #print("similarity= {}".format(similarity))
     return similarity
 
 def improved_sim(test,train,user_id,v):
@@ -111,11 +115,13 @@ def improved_sim(test,train,user_id,v):
     #print(" union {} ans {} is : {} \n intersection {} and {} is {}\n".format(user_id,v,totale_rated_uv,user_id,v,corated_uv))
     s1=S1(u_user,v_user,corated_uv,totale_rated_uv,rated_by_u,rated_by_v,moyen_ratings_u,moyen_ratings_v)
     s2 = S2(corated_uv, rated_by_u, rated_by_v)
+
     s3 = S3(u_user, v_user, moyen_ratings_u - moyen_ratings_v)
     #print("S1={}".format(s1))
     #print("S2={}".format(s2))
     #print("S3={}".format(s3))
     #print("Similarity between {} and {} = {}".format(user_id,v,s1*s2*s3))
+    print("############################################################")
     return s1*s2*s3
 
 def S1(u_user,v_user,corated_uv,totale_rated_uv,rated_by_u,rated_by_v,moyen_ratings_u,moyen_ratings_v):
@@ -134,10 +140,11 @@ def S1(u_user,v_user,corated_uv,totale_rated_uv,rated_by_u,rated_by_v,moyen_rati
         for i in rated_by_v:
             #print("v_user={} ".format(v_user.loc[i]))
             down_v = down_v + (v_user.loc[i] * v_user.loc[i])
-        #print(" up= {} , down_u={} , down_v={}".format(up ,down_u,down_v))
+        print(" up= {} , down_u={} , down_v={}".format(up ,down_u,down_v))
         if down_u==0 or down_v==0 :
             return 0
         else :
+
             return up/(math.sqrt(down_u) * math.sqrt(down_v))
 
 
@@ -161,6 +168,7 @@ def S1(u_user,v_user,corated_uv,totale_rated_uv,rated_by_u,rated_by_v,moyen_rati
         m=munis_function(totale_rated_uv,rated_by_v)
         for i in m :
             down_v_moy=down_v_moy+(moyen_ratings_v*moyen_ratings_v)
+        print(" up={} ,down_u={} , down_u_moy={} , down_v={} , down_v_moy={}".format(up,down_u,down_u_moy,down_v,down_v_moy))
 
         return up/(math.sqrt(down_u+down_u_moy)*math.sqrt(down_v+down_v_moy))
 
@@ -174,7 +182,8 @@ def S3(u_user,v_user,def_moyen):
     var_u=variance(u_user.values)
     var_v = variance(v_user.values)
     def_variance=var_u-var_v
-    #print("the variances are {} and {}".format(var_u,var_v))
+    #print("the variances are u={} and v={}".format(var_u,var_v))
+
     var3=1+math.exp(-abs(def_variance)*abs(def_moyen))
     return 1-(1/var3)
 
@@ -577,9 +586,38 @@ def evaluate_algorithm_dataframe(algorithm, distance,dataset_name, fold,*args):
 
 # -----------------*******************    main    *********************--------------------------------
 if __name__ == '__main__':
-    sparsity_thershold=0.985
+    sparsity_thershold=0.2
+
+    id_item = ['User1', 'User2', 'User3', 'User4', 'User5']
+    item1_ = []
+    item2_ = []
+    item3_ = []
+    item4_ = []
+
+    item1 = [4, 5, 4, 2, 4]
+    item2 = [3, 3, 3, 1, 2]
+
+    item3 = [5, 0, 3, 0, 0]
+
+    item4 = [4, 0, 4, 0, 0]
+
+    for i in item1:
+        item1_.append(i)
+    for i in item2:
+        item2_.append(i)
+    for i in item3:
+        item3_.append(i)
+    for i in item4:
+        item4_.append(i)
+    thevector = {'item1': item1_, 'item2': item2_, 'item3': item3_, 'item4': item4_}
+    data_fr = pd.DataFrame(thevector, index=id_item)
+    sparsity_level = sparsity(data_fr)
+    print("the data frame is {}".format(data_fr))
+    #for i in id_item:
+    sim = sparsity1article(data_fr, data_fr, 'User3')
+            #print("similarity {} et {} ={}".format(i, j, sim))
     #compute_evaluate()
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        train_set = load_eval_data("train", 4)
-        sparsity_level = sparsity(train_set)
-        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, improved_sim,"Movielens100k",4,50))
+    #with concurrent.futures.ProcessPoolExecutor() as executor:
+     #   train_set = load_eval_data("train", 4)
+      #  sparsity_level = sparsity(train_set)
+       # executor.submit(evaluate_algorithm_dataframe(predict_rating_new, improved_sim,"Movielens100k",4,50))

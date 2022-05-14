@@ -15,3 +15,31 @@ resultas pour  new_sim avec un paramètre k =  20 :
 accuracy
 [0.6977519888498929, 0.8995139732919517]
 That took 15229.682074546814 seconds
+****************************************************
+precision=0.7370753323485968 
+ recall=0.8762071992976295 
+ f_mesure=0.8006417970316887 
+ covrage=0.9938650306748467
+resultas pour  new_sim avec un paramètre k =  30: 
+accuracy
+[0.7060548544851095, 0.9085506709679283]
+
+
+********************************************************
+precision=0.7412358882947119 
+ recall=0.8708551483420593 
+ f_mesure=0.800834536992457 
+ covrage=0.9938650306748467
+resultas pour  new_sim avec un paramètre k =  40 : 
+accuracy
+[0.7128301006210693, 0.9157997366892542]
+That took 17038.26314520836 seconds
+*******************************************************
+precision=0.7440334128878282 
+ recall=0.8670258995306797 
+ f_mesure=0.8008348719595408 
+ covrage=0.9938650306748467
+resultas pour  new_sim avec un paramètre k =  50 : 
+accuracy
+[0.7184374172672827, 0.9220670851221893]
+That took 15423.001116991043 seconds
