@@ -206,18 +206,18 @@ def confusion(y_true, y_pred, threshold):
 
 def precision(tp, fp):
     result = tp / (tp + fp)
-    print(result)
+    #print(result)
     return (result)
 
 def recall(tp, fn):
     result = tp / (tp + fn)
-    print(result)
+    #print(result)
     return (result)
 
 def f_measure(precision, recall):
     result = 0
     result: Union[float, Any] = (2 * precision * recall) / (precision + recall)
-    print(result)
+    #print(result)
     return result
 
 def coverage(y_true, y_pred):
@@ -226,7 +226,7 @@ def coverage(y_true, y_pred):
         if y_pred[i] != 0.0:
             pt += 1
     result = pt / len(y_true)
-    print("pt is {}".format(pt))
+    #print("pt is {}".format(pt))
     return result
 #******************************************* Algorithm *******************************************
 
@@ -486,11 +486,12 @@ if __name__ == '__main__':
     F2knn_V2 = []
     F2knn_V3 = []
     for k in [10,20,30,40,50]:
-        fichier=open("data/results/full_2alpha_knn"+str(k),"rb")
+        fichier = open("data/results/full_2alpha_topsis" + str(k), 'rb')
         get_record = pickle.Unpickler(fichier)
-        print("data/results/full_2alpha_knn" + str(k))
+        print("data/results/full_2alpha_topsis" + str(k) )
         data=pickle.load(fichier)
         #print(data)
+
         predicted=data[0]
         actual=data[1]
         mae = mae_1(actual, predicted)
@@ -500,18 +501,16 @@ if __name__ == '__main__':
         presi = precision(tp, fp)
         f2 = f_measure(presi, rec)
         cov = coverage(actual, predicted)
-        RCLknn_V1.append(rec)
-        PRCknn_V1.append(presi)
-        F2knn_V1.append(f2)
-        MAEknn_V1.append(mae)
-        RMSEknn_V1.append(rmse)
+        RCLtopsis.append(rec)
+        PRCtopsis.append(presi)
+        F2topsis.append(f2)
+        MAEtopsis.append(mae)
+        RMSEtopsis.append(rmse)
+
 
         fichier.close()
 
-
-
-
-    print("MAEknn_V1={}\n RMSEknn_V1={}\nRCLknn_V1={}\n PRCknn_V1={}\n F2knn_V1={}".format(MAEknn_V1,RMSEknn_V1,RCLknn_V1,PRCknn_V1,F2knn_V1))
+    print("MAEtopsis={}\nRMSEtopsis={}\nRCLtopsis={}\nPRCtopsis={}\nF2topsis={}".format(MAEtopsis,RMSEtopsis,RCLtopsis,PRCtopsis,F2topsis))
 
     """
     saved = charge_subdataset(5)  # lire les 5 subsets avec différents degrés de sparsité
