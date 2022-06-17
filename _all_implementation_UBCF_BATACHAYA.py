@@ -66,6 +66,25 @@ def ratings_moy(self, user_id):
         print(result)
         return result
     return 0
+def inter_rating_union(test, train, u1, u2):  # calculer l'intersection entre les votes de deux utilisateurs
+    #print("hello inter rating")
+    co_rated = []
+    union = []
+    v1 = []
+    v2 = []
+    rated1 = rated_items(test, u1)
+    rated2 = rated_items(train, u2)
+    for i in range(0, len(rated1[0])):
+        for j in range(0, len(rated2[0])):
+            if rated1[0][i] == rated2[0][j]:
+                co_rated.append(rated1[0][i])
+                v1.append(rated1[1][i])
+                v2.append(rated2[1][j])
+
+    inter_rating = [co_rated, v1, v2]
+    union = rated1[0]
+    union.extend(x for x in rated2[0] if x not in union)
+    return ([inter_rating,union])
 
 
 def rated_items_only(self, user_id):  # retourne la liste des items notés ainsi que les notes attribuées
@@ -81,6 +100,18 @@ def rated_items_only(self, user_id):  # retourne la liste des items notés ainsi
             list_movie.append(movies[i])
     # print(list_rated)
     return list_movie
+def jaccard_sim(test, train, u1, u2):  # retourne les similarités jaccard des utilisateurs par  rapport à user_id
+    #print("hello jaccard")
+    res = inter_rating_union(test, train, u1, u2)
+    intersection = res[0]
+    union  = res[1]
+    common_movies_rated = len(intersection[0])
+    union_movies_rated = len(union)
+    #print("intersection"+str(common_movies_rated))
+    #print("union" + str(union_movies_rated))
+    jaccard_similarity = common_movies_rated / union_movies_rated if union_movies_rated != 0 else 0
+    #print(jaccard_similarity)
+    return (jaccard_similarity)
 
 
 """
@@ -159,13 +190,6 @@ def Bhattacharyya_measure(it1, it2):
     return BC
 
 
-"""
-local similarity
-this function returns  local similarity between ratings of the corresponding
-users on the items i and j
-"""
-
-
 def bhattacharyya_sim(test, train, user_id, v):
     print("_______________________Bhattacharyya similarity begung now_________________________")
     users = train.index.values
@@ -188,7 +212,7 @@ def bhattacharyya_sim(test, train, user_id, v):
             #print('b={} loc={}'.format(b, loc))
             print("itemu={} itemv={} loc ={} bc={}".format(i,j,loc,b))
             valeur_de_similarity = valeur_de_similarity + b * loc
-    print("valeur de similarity={}".format(valeur_de_similarity))
+    #print("valeur de similarity={}".format(valeur_de_similarity))
 
     return valeur_de_similarity
 
@@ -214,7 +238,7 @@ def article_sparsity_2(test, train, user_id):
                 loc = local_similarity(u_user, v_user, moyen_ratings_u, moyen_ratings_v, i, j)
                 valeur_de_similarity = valeur_de_similarity + b * loc
         similarity.append([v, valeur_de_similarity])
-        print("similarities BC = {}".format(similarity))
+        #print("similarities BC = {}".format(similarity))
     return similarity
 
 def variance(data, ddof=0):
@@ -247,12 +271,6 @@ def local_similarity(u_user, v_user, moyen_ratings_u, moyen_ratings_v, itm1, itm
     return loc
 
 
-"""
-rated_items
-this function returns the list of rated movies and their ratings by a target user
-"""
-
-
 def rated_items(self, user_id):  # retourne la liste des items notés ainsi que les notes attribuées
     # print(user)
     list_movie = []
@@ -269,13 +287,6 @@ def rated_items(self, user_id):  # retourne la liste des items notés ainsi que 
     list_rated = [list_movie, list_ratings]
     # print(list_rated)
     return (list_rated)
-
-
-"""
-load_eval_data
-this function loads data elavuation for each fold 
-for example for fold 0 , evaluation data is in : testtrain\Movielens100k\\fold0
-"""
 
 
 def load_eval_data(data_name, fold):  # charger les données de test de leurs emplacement ( cas de movielens)
@@ -404,12 +415,6 @@ def precision(tp, fp):
     result = tp / (tp + fp)
     # print(result)
     return (result)
-
-
-"""
-recall
-this function returns recall for predicted and actual ratings
-"""
 
 
 def recall(tp, fn):
@@ -682,7 +687,7 @@ if __name__ == '__main__':
                      ['User3', 4, 3, 3, 4],
                      ['User4', 2, 1, 0, 0],
                      ['User5', 4, 2, 0, 0]])
-    """
+
 
     id_item = ['User1', 'User2', 'User3', 'User4', 'User5']
     item1_ = []
@@ -706,6 +711,7 @@ if __name__ == '__main__':
     for i in item4:
         item4_.append(i)
     thevector = {'item1': item1_, 'item2': item2_, 'item3': item3_, 'item4': item4_}
+
     """
     id_item = ['User1', 'User2', 'User3']
     item1_ = []
@@ -735,13 +741,17 @@ if __name__ == '__main__':
     for i in item6:
         item6_.append(i)
     thevector = {'item1': item1_, 'item2': item2_, 'item3': item3_, 'item4': item4_,'item5': item5_,'item6': item6_}
-
+"""
 
     data_fr = pd.DataFrame(thevector, index=id_item)
     print("the data frame is {}".format(data_fr))
-    for i in id_item:
-        for j in id_item:
-            sim=bhattacharyya_sim(data_fr, data_fr, i, j)
-            print("similarity {} et {} ={}".format(i,j,sim))
+
+    bc = bhattacharyya_sim(data_fr, data_fr, 'User1', 'User2')
+    jacard = jaccard_sim(data_fr, data_fr, 'User1', 'User2')
+    print("similarity {} et {} ={} \n BC= {} JACCARD={}".format('User1', 'User2', bc + jacard, bc, jacard))
+    bc = bhattacharyya_sim(data_fr, data_fr, 'User2', 'User1')
+    jacard = jaccard_sim(data_fr, data_fr, 'User2', 'User1')
+    print("similarity {} et {} ={} \n BC= {} JACCARD={}".format('User2', 'User1', bc + jacard, bc, jacard))
+
 # with concurrent.futures.ProcessPoolExecutor() as executor:
  #       executor.submit(evaluate_algorithm_dataframe(predict_rating_new, bhattacharyya_sim,"Movielens100k",4,50))

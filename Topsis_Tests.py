@@ -270,7 +270,6 @@ def k_nearest_neighbors(test, train, user_id, item_id, k, distance):
         simi = distance(test, train, user_id, user)
         similarity.append(simi)
     #sorted_list = sorted(similarity, key=lambda item: (-item[1]))# V1
-
     #sorted_list = sorted(similarity, key=lambda item: (item[3],-item[1])) # V2
     sorted_list = sorted(similarity, key=lambda item: (-(item[1] - item[2]))) #V3
 
@@ -412,7 +411,7 @@ def evaluate_algorithm_dataframe(dataset,algorithm, distance, dataset_name, k):
     start_time = time.time()
     print("i am in evaluate")
     predicted = []
-    results = open("resultTopsis\\values_knn_v3_" + str(dataset_name)+".txt", 'wb')
+    results = open("resultTopsis\\k\\values_knn_v3_" + str(k)+".txt", 'wb')
     # ----------------Small dataset
     #fic_data = open("data/5-subsets/subset1", "rb")
     #record = pickle.Unpickler(fic_data)
@@ -447,7 +446,7 @@ def evaluate_algorithm_dataframe(dataset,algorithm, distance, dataset_name, k):
     f2 = f_measure(presi, rec)
     cov = coverage(actual, predicted)
 
-    sys.stdout = open("resultTopsis\\results_knn_v3_ " + str(dataset_name) + " .txt", "a+")
+    sys.stdout = open("resultTopsis\\k\\results_knn_v3_" + str(k) + " .txt", "a+")
     print("resultas pour  new_sim avec un paramètre k =  " + str(k) + " : ")
     print("mae={} \n rmse={} \n precision={} \n recall={} \n f_mesure={} \n covrage={}".format(mae,rmse,presi, rec, f2, cov))
     print("That took {} seconds".format(time.time() - start_time))
@@ -459,41 +458,48 @@ def evaluate_algorithm_dataframe(dataset,algorithm, distance, dataset_name, k):
 # -----------------*******************    main    *********************--------------------------------
 
 if __name__ == '__main__':
+    saved = charge_subdataset(5)  # lire les 5 subsets avec différents degrés de sparsité 0, 2 , 4
+    dataset0 = saved[0]
+    dataset1 = saved[1]  # choisir le premier subset 60.97 sparsité
+    dataset2 = saved[2]
+    dataset3 = saved[3]
+    print(sparsity(dataset2))
 
-    MAEtopsis = []
-    MAEknn_V1 = []
-    MAEknn_V2 = []
-    MAEknn_V3 = []
+    MAEtopsis0 = []
+    MAEknn_V10 = []
+    MAEknn_V20 = []
+    MAEknn_V30 = []
 
     # ***********************RMSE
-    RMSEtopsis = []
-    RMSEknn_V1 = []
-    RMSEknn_V2 = []
-    RMSEknn_V3 = []
+    RMSEtopsis0 = []
+    RMSEknn_V10 = []
+    RMSEknn_V20 = []
+    RMSEknn_V30 = []
 
-    RCLtopsis = []
-    RCLknn_V1 = []
-    RCLknn_V2 = []
-    RCLknn_V3 = []
+    RCLtopsis0 = []
+    RCLknn_V10 = []
+    RCLknn_V20 = []
+    RCLknn_V30 = []
 
-    PRCtopsis = []
-    PRCknn_V1 = []
-    PRCknn_V2 = []
-    PRCknn_V3 = []
+    PRCtopsis0 = []
+    PRCknn_V10 = []
+    PRCknn_V20 = []
+    PRCknn_V30 = []
 
-    F2topsis = []
-    F2knn_V1 = []
-    F2knn_V2 = []
-    F2knn_V3 = []
+    F2topsis0 = []
+    F2knn_V10 = []
+    F2knn_V20 = []
+    F2knn_V30 = []
+
     for k in [10,20,30,40,50]:
-        fichier = open("data/results/full_2alpha_topsis" + str(k), 'rb')
+        fichier = open("resultTopsis\\k\\values_topsis" + str(k) + ".txt", 'rb')
         get_record = pickle.Unpickler(fichier)
-        print("data/results/full_2alpha_topsis" + str(k) )
-        data=pickle.load(fichier)
-        #print(data)
+        # print("data/results/full_2alpha_knn_V3" + str(s) )
+        data = pickle.load(fichier)
+        # print(data)
 
-        predicted=data[0]
-        actual=data[1]
+        predicted = data[0]
+        actual = data[1]
         mae = mae_1(actual, predicted)
         rmse = rmse_1(actual, predicted)
         tp, fp, tn, fn = confusion(predicted, actual, 3)
@@ -501,19 +507,45 @@ if __name__ == '__main__':
         presi = precision(tp, fp)
         f2 = f_measure(presi, rec)
         cov = coverage(actual, predicted)
-        RCLtopsis.append(rec)
-        PRCtopsis.append(presi)
-        F2topsis.append(f2)
-        MAEtopsis.append(mae)
-        RMSEtopsis.append(rmse)
-
-
+        RCLtopsis0.append(rec)
+        PRCtopsis0.append(presi)
+        F2topsis0.append(f2)
+        MAEtopsis0.append(mae)
+        RMSEtopsis0.append(rmse)
         fichier.close()
 
-    print("MAEtopsis={}\nRMSEtopsis={}\nRCLtopsis={}\nPRCtopsis={}\nF2topsis={}".format(MAEtopsis,RMSEtopsis,RCLtopsis,PRCtopsis,F2topsis))
+    print(
+            "MAEtopsis0={}\nRMSEtopsis0={}\nRCLtopsis0={}\nPRCtopsis0={}\nF2topsis0={}".format(MAEtopsis0, RMSEtopsis0,
+                                                                                               RCLtopsis0, PRCtopsis0, F2topsis0))
 
-    """
-    saved = charge_subdataset(5)  # lire les 5 subsets avec différents degrés de sparsité
+"""                                                                                            
+saved = charge_subdataset(5)  # lire les 5 subsets avec différents degrés de sparsité 0, 2 , 4
+    dataset0 = saved[0]
+    dataset1 = saved[1]  # choisir le premier subset 60.97 sparsité
+    dataset2 = saved[2]
+    dataset3 = saved[3]
+    dataset4 = saved[4]
+    dataset5 = saved[5]
+    dataset6 = saved[6]
+    dataset7 = saved[7]
+
+    sparsitylist=[]
+    sparsitylist.append(sparsity(dataset0))
+    sparsitylist.append(sparsity(dataset1))
+    sparsitylist.append(sparsity(dataset2))
+    sparsitylist.append(sparsity(dataset3))
+    sparsitylist.append(sparsity(dataset4))
+    sparsitylist.append(sparsity(dataset5))
+    sparsitylist.append(sparsity(dataset6))
+    sparsitylist.append(sparsity(dataset7))
+    print(sparsitylist)
+    for k in [10, 20, 30, 40, 50]:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            executor.submit(
+                evaluate_algorithm_dataframe(dataset2, predict_rating_new, new_sim, sparsity(dataset2), k))
+
+
+    saved = charge_subdataset(5)  # lire les 5 subsets avec différents degrés de sparsité 0, 2 , 4
     dataset0 = saved[0]
     dataset1 = saved[1]  # choisir le premier subset 60.97 sparsité
     dataset2 = saved[2]
@@ -581,10 +613,4 @@ if __name__ == '__main__':
     f2=f_measure(presi,rec)
     cov=coverage(actual,data_pre)
     print("precision={} \n recall={} \n f_mesure={} \n covrage={}".format(presi,rec,f2,cov))
-"""
-
-    """
-    compute_evaluate()
-
-
-    """
+   """

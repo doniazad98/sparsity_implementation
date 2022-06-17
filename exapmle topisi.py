@@ -14,6 +14,90 @@ from numpy.linalg import norm
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.model_selection import train_test_split
 from data_preparation import sparsity
+def topsis_example(decision_matrix,neighbors,user_id,k):
+
+    e_positive=[]
+    e_negative=[]
+
+
+    print('decision_matrix= \n {}'.format(decision_matrix))
+    # ------------------------------ Normalisation -----------------------------
+    sim_ = 0
+    disim_ = 0
+    igno_ = 0
+    normalise_decision_matrix = decision_matrix.copy()
+    for i in neighbors:
+        sim_ = sim_ + (normalise_decision_matrix.loc[i, 'sim'] * normalise_decision_matrix.loc[i, 'sim'])
+        disim_ = disim_ + (normalise_decision_matrix.loc[i, 'disim'] * normalise_decision_matrix.loc[i, 'disim'])
+        igno_ = igno_ + (normalise_decision_matrix.loc[i, 'igno'] * normalise_decision_matrix.loc[i, 'igno'])
+
+    for i in neighbors:
+        normalise_decision_matrix.loc[i, 'sim'] = normalise_decision_matrix.loc[i, 'sim'] / sqrt(sim_)
+        normalise_decision_matrix.loc[i, 'disim'] = normalise_decision_matrix.loc[i, 'disim'] / sqrt(disim_)
+        normalise_decision_matrix.loc[i, 'igno'] = normalise_decision_matrix.loc[i, 'igno'] / sqrt(igno_)
+    print('normalise_decision_matrix= \n {}'.format(normalise_decision_matrix))
+    # ------------------------------ Ponderation ----------------------------------
+    weight = [1, 1, 1]
+    ponderation_desicion_matrix = normalise_decision_matrix.copy()
+    for i in neighbors:
+        ponderation_desicion_matrix.loc[i, 'sim'] = ponderation_desicion_matrix.loc[i, 'sim'] * weight[0]
+        ponderation_desicion_matrix.loc[i, 'disim'] = ponderation_desicion_matrix.loc[i, 'disim'] * weight[1]
+        ponderation_desicion_matrix.loc[i, 'igno'] = ponderation_desicion_matrix.loc[i, 'igno'] * weight[2]
+    print('ponderation_desicion_matrix= \n {}'.format(ponderation_desicion_matrix))
+    # ------------------------------ A_positive & A_negative -------------------------
+
+    a_positive = pd.DataFrame({'sim': max(ponderation_desicion_matrix.loc[:, "sim"].values),
+                               'disim': min(ponderation_desicion_matrix.loc[:, "disim"].values),
+                               'igno': min(ponderation_desicion_matrix.loc[:, "igno"].values)},
+                              index=[user_id]
+                              )
+
+    a_negative = pd.DataFrame({'sim': min(ponderation_desicion_matrix.loc[:, "sim"].values),
+                               'disim': max(ponderation_desicion_matrix.loc[:, "disim"].values),
+                               'igno': max(ponderation_desicion_matrix.loc[:, "igno"].values)},
+                              index=[user_id]
+                              )
+    print(" a_positive={} a_negative={}".format(a_positive,a_negative))
+
+    # ------------------------------ E_positive & E_negative -------------------------
+
+    euclidien_distance_positive = euclidean_distances(a_positive, ponderation_desicion_matrix)[0]
+    euclidien_distance_nagative = euclidean_distances(a_negative, ponderation_desicion_matrix)[0]
+
+    n = 0
+    for i in neighbors:
+        # print("[i,euclidien_distance_positive[n]]={}  [i,euclidien_distance_nagative[n]]={}".format([i,euclidien_distance_positive[n]],[i,euclidien_distance_nagative[n]]))
+        e_positive.append([i, euclidien_distance_positive[n]])
+        e_negative.append([i, euclidien_distance_nagative[n]])
+        n = n + 1
+    print("e_positive={}".format(e_positive))
+    print("e_negative={}".format(e_negative))
+    n = 0
+    # sorted_list_positive = sorted(e_positive, key=lambda item: (item[1]))# we need minimum distance
+    # sorted_list_negative = sorted(similarity, key=lambda item: (item[1]))
+
+    # ---------------------------------relative closeness-------------------------------
+    relative_closeness = []
+    for i in neighbors:
+        c = e_negative[n][1] / (e_positive[n][1] + e_negative[n][1])
+        relative_closeness.append([i, c])
+        n = n + 1
+    print("relative_closeness={}".format(relative_closeness))
+    # --------------------------------Ranked items----------------------------------
+    final_neighbors = []
+    sorted_list_positive = sorted(relative_closeness, key=lambda item: (-item[1]))  # on veut closeness maximal
+    # print("sorted_list_positive={}".format(sorted_list_positive[:k]))
+    sorted_list_positive = sorted_list_positive[:k]
+    for i in sorted_list_positive:
+        val = [i[0]]
+        val.extend(decision_matrix.loc[i[0]].values)
+
+        final_neighbors.append(val)
+
+    print("final neighbors = {}".format(final_neighbors))
+
+    return final_neighbors
+
 
 # -----------------  end imports----------------------------------------------
 from data_preparation import charge_subdataset
@@ -379,6 +463,7 @@ def Topsis(test, train, user_id, item_id, k, distance):
 
     return final_neighbors
 
+
 def predict_rating_new(test, train, user_id, item_id, l, distance):
     top_res = 0
     but_res = 0
@@ -461,22 +546,15 @@ def evaluate_algorithm_dataframe(algorithm, distance, dataset_name, fold, k):
 
 # -----------------*******************    main    *********************--------------------------------
 if __name__ == '__main__':
-    saved = charge_subdataset(5)  # lire les 5 subsets avec différents degrés de sparsité 0, 2 , 4
-    dataset0 = saved[0]
-    dataset1 = saved[1]  # choisir le premier subset 60.97 sparsité
-    dataset2 = saved[2]
-    dataset3 = saved[3]
-    dataset4 = saved[4]
-    dataset5 = saved[5]
-    dataset6 = saved[6]
-    dataset7 = saved[7]
-    print(sparsity(dataset7))
 
-    for dataset in [dataset5, dataset6, dataset7]:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            executor.submit(
-                evaluate_algorithm_dataframe(dataset, predict_rating_new, new_sim, sparsity(dataset), 50))
-    #sys.stdout.close()
+    sim=[0.4,0.8,0.8,0.2,0.9]
+    dissim=[0.2,0.05,0.15,0.6,0.1]
+    igno=[0.4,0.15,0.05,0.2,0]
+    neighbors=[1,2,3,4,5]
+    decision_matrix = pd.DataFrame({'sim': sim, 'disim': dissim, 'igno': igno}, index=neighbors)
+    topsis_example(decision_matrix,neighbors,6,5)
+
+
     #with concurrent.futures.ProcessPoolExecutor() as executor:
     #    executor.submit(evaluate_algorithm_dataframe(predict_rating_new, new_sim, "Movielens100k", 4, 20))
 

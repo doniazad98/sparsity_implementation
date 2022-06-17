@@ -269,18 +269,14 @@ def new_sim(test, train, u1, u2):  # retourne les similarités cosinus des utili
     co_rated1 = cor[1]
     co_rated2 = cor[2]
     z = len(cor[0])
-    # alpha here is egal a 1 ?
-    if cor!=[]:
+    if cor != []:
         for n in range(0, z):
             res += ((min(int(co_rated1[n]), int(co_rated2[n]))) / (max(int(co_rated1[n]), int(co_rated2[n]))))
-        sim = res / (z + 1)
-        disim = (z / (z + 1)) - sim
-        g = 1 / (z + 1)
-    if float(sim) > float(disim):
-        #why is this ? even if they are mor disimilaire tha similaire we should return similarity
-        return(sim)
-
-    return (0)# this should be zero i think , no corated items
+        sim = res / (z + 2)
+        disim = (z / (z + 2)) - sim
+        g = 2 / (z + 2)
+    #print(" similarity ={}".format([u2, sim, disim, g]))
+    return [u2, sim, disim, g]
 
 
 """
@@ -413,11 +409,30 @@ def evaluate_algorithm_dataframe(algorithm, distance, dataset_name, fold, *args)
 # -----------------*******************    main    *********************--------------------------------
 if __name__ == '__main__':
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.submit(evaluate_algorithm_dataframe(predict_rating_new, new_sim,"Movielens100k",4,50))
+    id_item = ['User1', 'User2', 'User3', 'User4', 'User5']
+    item1_ = []
+    item2_ = []
+    item3_ = []
+    item4_ = []
 
+    item1 = [4, 5, 4, 2, 4]
+    item2 = [3, 3, 3, 1, 2]
 
-    compute_evaluate()
+    item3 = [5, 0, 3, 0, 0]
+
+    item4 = [4, 0, 4, 0, 0]
+
+    for i in item1:
+        item1_.append(i)
+    for i in item2:
+        item2_.append(i)
+    for i in item3:
+        item3_.append(i)
+    for i in item4:
+        item4_.append(i)
+    thevector = {'item1': item1_, 'item2': item2_, 'item3': item3_, 'item4': item4_}
+    data_fr = pd.DataFrame(thevector, index=id_item)
+    print("the data frame is {}".format(data_fr))
 
 
 

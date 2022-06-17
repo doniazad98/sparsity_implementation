@@ -45,7 +45,7 @@ def load_all_pick_subdataset(nb):
     filename = str(nb)+"-subsets"
    # print(filename)
     file_sub = []
-    for i in range(1,nb+1):
+    for i in range(1,9):
 
         file = "subset"+str(i)
         infile = open("data/"+filename+"/"+file, 'rb')
